@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Indiana County Map | Poverty, Income and Age</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      text-align: center;
+      padding: 10px;
+      background: #5a418f;
+      color: white;
+      height: 100px;
+    }
+    #map {
+      width: 80%;
+      height: 70vh;
+      margin: 20px auto;
+      border: 2px solid #444;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .legend {
+      position: absolute;
+      top: 20px;
+      left: 50px;
+      z-index: 9999;
+      background: white;
+      padding: 10px;
+      border: 2px solid grey;
+      border-radius: 5px;
+      font-size: 14px;
+      line-height: 20px;
+      width: 160px;
+      display: none;
+    }
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Indiana County Map</h1>
+    <p>Explore poverty, income, and age distributions across Marshall, St. Joseph, and Elkhart counties</p>
+  </header>
+
+  <!-- Map container -->
+  <div id="map">
+    <iframe id="leafletFrame" src="map_toggle.html" style="width:100%; height:100%; border:none;"></iframe>
+
+    <!-- Poverty legend -->
+    <div class="legend" id="povertyLegend">
+      <b>Poverty Levels</b><br>
+      <i style="background:#800026"></i>> 30%<br>
+      <i style="background:#BD0026"></i>20–30%<br>
+      <i style="background:#E31A1C"></i>10–20%<br>
+      <i style="background:#FC4E2A"></i>< 10%<br>
+    </div>
+
+    <!-- Income legend -->
+    <div class="legend" id="incomeLegend">
+      <b>Income Levels</b><br>
+      <i style="background:#00441b"></i>> $80k<br>
+      <i style="background:#006d2c"></i>$60k–$80k<br>
+      <i style="background:#238b45"></i>$40k–$60k<br>
+      <i style="background:#41ae76"></i>< $40k<br>
+    </div>
+
+    <!-- Under 18 legend -->
+    <div class="legend" id="u18Legend">
+      <b>Under 18 Population</b><br>
+      <i style="background:#4b0082"></i>> 5000<br>
+      <i style="background:#6a0dad"></i>3000–5000<br>
+      <i style="background:#9370db"></i>1000–3000<br>
+      <i style="background:#d8bfd8"></i>< 1000<br>
+    </div>
+
+    <!-- Over 60 legend -->
+    <div class="legend" id="o60Legend">
+      <b>Over 60 Population</b><br>
+      <i style="background:#2f4f4f"></i>> 4000<br>
+      <i style="background:#555555"></i>2500–4000<br>
+      <i style="background:#808080"></i>1000–2500<br>
+      <i style="background:#d3d3d3"></i>< 1000<br>
+    </div>
+  </div>
+
+  <script>
+    //Show one legend at a time
+    function showLegend(id) {
+      const legends = document.getElementsByClassName("legend");
+      for (let i = 0; i < legends.length; i++) legends[i].style.display = "none";
+      if (id) document.getElementById(id).style.display = "block";
+    }
+
+    //Wait for iframe map to load
+    document.getElementById('leafletFrame').addEventListener('load', function() {
+      const frame = document.getElementById('leafletFrame');
+      const doc = frame.contentDocument || frame.contentWindow.document;
+
+      //Wait a little to ensure Leaflet UI is ready
+      setTimeout(() => {
+        const checkboxes = Array.from(doc.querySelectorAll('.leaflet-control-layers-overlays input[type=checkbox]'));
+        const labels = Array.from(doc.querySelectorAll('.leaflet-control-layers-overlays label'));
+
+        //Associate labels with legends
+        const legendMap = {
+          'Poverty Heatmap': 'povertyLegend',
+          'Income Heatmap': 'incomeLegend',
+          'Under 18': 'u18Legend',
+          'Over 60': 'o60Legend'
+        };
+
+        // When a box is clicked, enforce exclusivity and switch legend
+        checkboxes.forEach((cb, i) => {
+          cb.addEventListener('change', function() {
+            const labelText = labels[i].innerText.trim();
+
+            if (this.checked) {
+              // Uncheck all others except this one and Transportation Routes
+              checkboxes.forEach((other, j) => {
+                const otherLabel = labels[j].innerText.trim();
+                if (other !== this && legendMap[otherLabel]) {
+                  if (other.checked) other.click();
+                }
+              });
+              // Show the matching legend
+              if (legendMap[labelText]) showLegend(legendMap[labelText]);
+            } else {
+              // Hide legend if unchecked
+              if (legendMap[labelText]) showLegend(null);
+            }
+          });
+        });
+
+        // Start with Poverty visible
+        const povertyIndex = labels.findIndex(l => l.innerText.trim() === 'Poverty Heatmap');
+        if (povertyIndex !== -1) {
+          const povertyBox = checkboxes[povertyIndex];
+          if (!povertyBox.checked) povertyBox.click();
+          showLegend('povertyLegend');
+        }
+      }, 700);
+    });
+  </script>
+</body>
+</html>
