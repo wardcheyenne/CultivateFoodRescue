@@ -22,7 +22,7 @@
       border: 2px solid #444;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      position: relative;
+      position: relative; /* legends sit inside */
     }
     .legend {
       position: absolute;
@@ -36,7 +36,7 @@
       font-size: 14px;
       line-height: 20px;
       width: 160px;
-      display: none;
+      display: none; /* start hidden */
     }
     .legend i {
       width: 18px;
@@ -44,6 +44,23 @@
       float: left;
       margin-right: 8px;
       opacity: 0.7;
+    }
+    .toggle-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .toggle-btn {
+      background: #444;
+      color: white;
+      padding: 8px 16px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .toggle-btn:hover {
+      background: #222;
     }
   </style>
 </head>
@@ -55,7 +72,7 @@
 
   <!-- Map container -->
   <div id="map">
-    <iframe id="leafletFrame" src="map_toggle.html" style="width:100%; height:100%; border:none;"></iframe>
+    <iframe src="map_toggle.html" style="width:100%; height:100%; border:none;"></iframe>
 
     <!-- Poverty legend -->
     <div class="legend" id="povertyLegend">
@@ -94,63 +111,24 @@
     </div>
   </div>
 
+  <!-- Switch buttons -->
+  <div class="toggle-container">
+    <button class="toggle-btn" onclick="showLegend('povertyLegend')">Poverty Legend</button>
+    <button class="toggle-btn" onclick="showLegend('incomeLegend')">Income Legend</button>
+    <button class="toggle-btn" onclick="showLegend('u18Legend')">Under 18 Legend</button>
+    <button class="toggle-btn" onclick="showLegend('o60Legend')">Over 60 Legend</button>
+  </div>
+
   <script>
-    //Show one legend at a time
     function showLegend(id) {
-      const legends = document.getElementsByClassName("legend");
-      for (let i = 0; i < legends.length; i++) legends[i].style.display = "none";
-      if (id) document.getElementById(id).style.display = "block";
+      //Hide all legends
+      var legends = document.getElementsByClassName("legend");
+      for (var i = 0; i < legends.length; i++) {
+        legends[i].style.display = "none";
+      }
+      //Show only the selected one
+      document.getElementById(id).style.display = "block";
     }
-
-    //Wait for iframe map to load
-    document.getElementById('leafletFrame').addEventListener('load', function() {
-      const frame = document.getElementById('leafletFrame');
-      const doc = frame.contentDocument || frame.contentWindow.document;
-
-      //Wait a little to ensure Leaflet UI is ready
-      setTimeout(() => {
-        const checkboxes = Array.from(doc.querySelectorAll('.leaflet-control-layers-overlays input[type=checkbox]'));
-        const labels = Array.from(doc.querySelectorAll('.leaflet-control-layers-overlays label'));
-
-        //Associate labels with legends
-        const legendMap = {
-          'Poverty Heatmap': 'povertyLegend',
-          'Income Heatmap': 'incomeLegend',
-          'Under 18': 'u18Legend',
-          'Over 60': 'o60Legend'
-        };
-
-        // When a box is clicked, enforce exclusivity and switch legend
-        checkboxes.forEach((cb, i) => {
-          cb.addEventListener('change', function() {
-            const labelText = labels[i].innerText.trim();
-
-            if (this.checked) {
-              // Uncheck all others except this one and Transportation Routes
-              checkboxes.forEach((other, j) => {
-                const otherLabel = labels[j].innerText.trim();
-                if (other !== this && legendMap[otherLabel]) {
-                  if (other.checked) other.click();
-                }
-              });
-              // Show the matching legend
-              if (legendMap[labelText]) showLegend(legendMap[labelText]);
-            } else {
-              // Hide legend if unchecked
-              if (legendMap[labelText]) showLegend(null);
-            }
-          });
-        });
-
-        // Start with Poverty visible
-        const povertyIndex = labels.findIndex(l => l.innerText.trim() === 'Poverty Heatmap');
-        if (povertyIndex !== -1) {
-          const povertyBox = checkboxes[povertyIndex];
-          if (!povertyBox.checked) povertyBox.click();
-          showLegend('povertyLegend');
-        }
-      }, 700);
-    });
   </script>
 </body>
 </html>
